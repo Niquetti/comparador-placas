@@ -2,7 +2,7 @@ import pandas as pd
 import streamlit as st
 
 st.set_page_config(page_title="Comparador de Placas", layout="wide")
-st.title("🚔 Comparador de Placas com Coincidência Pós-Placa Suspeita")
+st.title("🚔 Comparador de Placas")
 
 uploaded_files = st.file_uploader(
     "📁 Envie 2 ou mais arquivos Excel (.xlsx)",
@@ -16,7 +16,7 @@ def buscar_coincidencias_apos_placa(placa_suspeita, todas):
     placa_suspeita = placa_suspeita.strip().upper()
     resultados = []
 
-    # Verifica quais placas aparecem em mais de um arquivo
+    # Placas que aparecem em mais de um arquivo
     placas_por_arquivo = todas.drop_duplicates(subset=['Placa', '_arquivo_'])
     contagem = placas_por_arquivo['Placa'].value_counts()
     placas_em_mais_de_um = contagem[contagem > 1].index.tolist()
@@ -28,7 +28,7 @@ def buscar_coincidencias_apos_placa(placa_suspeita, todas):
         for idx in indices_placa:
             placas_apos = df_arq.loc[idx+1:, 'Placa'].tolist()
             coincidencias = [p for p in placas_apos if p in placas_em_mais_de_um and p != placa_suspeita]
-            coincidencias_unicas = list(dict.fromkeys(coincidencias))  # remove duplicadas
+            coincidencias_unicas = list(dict.fromkeys(coincidencias))
 
             if coincidencias_unicas:
                 resultados.append({
@@ -79,3 +79,7 @@ if uploaded_files:
                         st.markdown("---")
                 else:
                     st.warning(f"Nenhuma coincidência encontrada após *{placa_input.upper()}*.")
+
+# Rodapé com assinatura
+st.markdown("<hr style='margin-top: 50px;'>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; font-size: 14px;'>Desenvolvido por <strong>Niquetti</strong> 🚔</p>", unsafe_allow_html=True)
