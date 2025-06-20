@@ -1,8 +1,8 @@
 import pandas as pd
 import streamlit as st
 
-st.set_page_config(page_title="Comparador de Placas", layout="wide")
-st.title("🚔 Comparador de Placas com Coincidência Pós-Placa Suspeita")
+st.set_page_config(page_title="Niquetti", layout="wide")
+st.title("🚔 Comparador de Placas")
 
 uploaded_files = st.file_uploader(
     "📁 Envie 2 ou mais arquivos Excel (.xlsx)",
