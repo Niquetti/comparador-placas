@@ -1,4 +1,4 @@
-[13:24, 20/06/2025] Jean Nk9: mport pandas as pd
+Import pandas as pd
 import streamlit as st
 
 st.set_page_config(page_title="Comparador de Placas", layout="wide")
