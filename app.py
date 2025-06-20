@@ -12,7 +12,7 @@ uploaded_files = st.file_uploader(
 
 dfs = []
 
-# ✅ Função atualizada que checa se a placa aparece em mais de um arquivo diretamente
+# ✅ Função corrigida: só considera coincidência se placa aparecer em outro arquivo diferente
 def buscar_coincidencias_apos_placa(placa_suspeita, todas):
     placa_suspeita = placa_suspeita.strip().upper()
     resultados = []
@@ -22,15 +22,15 @@ def buscar_coincidencias_apos_placa(placa_suspeita, todas):
         indices_placa = df_arq.index[df_arq['Placa'] == placa_suspeita].tolist()
 
         if not indices_placa:
-            continue  # Placa não está neste arquivo
+            continue
 
         for idx in indices_placa:
             placas_apos = df_arq.loc[idx+1:, 'Placa'].tolist()
             coincidencias = []
 
             for p in placas_apos:
-                arquivos_placa = todas[todas['Placa'] == p]['_arquivo_'].nunique()
-                if arquivos_placa > 1 and p != placa_suspeita:
+                arquivos_placa = todas[todas['Placa'] == p]['_arquivo_'].unique()
+                if len(arquivos_placa) > 1 and any(a != arquivo for a in arquivos_placa):
                     coincidencias.append(p)
 
             if coincidencias:
