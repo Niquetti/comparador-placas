@@ -1,43 +1,72 @@
 import streamlit as st
 import pandas as pd
 
-st.set_page_config(page_title="Comparador de Placas", layout="centered")
-st.title("🔍 Comparador de Placas entre dois arquivos Excel")
+st.set_page_config(page_title="Comparador de Arquivos", layout="wide")
+st.title("📊 Comparador de Arquivos Excel por Modelo de Veículo")
 
-st.markdown("Envie dois arquivos Excel com uma coluna de placas para comparar quais **aparecem nos dois locais**.")
+# Upload múltiplo de arquivos (até 10)
+uploaded_files = st.file_uploader(
+    "📁 Envie até 10 arquivos Excel (.xlsx)",
+    type=["xlsx"],
+    accept_multiple_files=True
+)
 
-file1 = st.file_uploader("Arquivo Excel 1", type=["xlsx"])
-file2 = st.file_uploader("Arquivo Excel 2", type=["xlsx"])
+# Filtros por modelo (até 3 modelos)
+st.subheader("🚗 Filtrar por modelo de veículo (opcional)")
+col1, col2, col3 = st.columns(3)
+with col1:
+    modelo1 = st.text_input("Modelo 1", placeholder="Ex: SW4")
+with col2:
+    modelo2 = st.text_input("Modelo 2", placeholder="Ex: Hilux")
+with col3:
+    modelo3 = st.text_input("Modelo 3", placeholder="Ex: Corolla")
 
-if file1 and file2:
-    try:
-        df1 = pd.read_excel(file1)
-        df2 = pd.read_excel(file2)
+# Coletar modelos preenchidos
+modelos_filtrar = [m for m in [modelo1, modelo2, modelo3] if m]
 
-        colunas1 = df1.columns.tolist()
-        colunas2 = df2.columns.tolist()
+if uploaded_files:
+    if len(uploaded_files) > 10:
+        st.warning("Você só pode enviar até 10 arquivos.")
+    else:
+        dfs = []
+        nomes = []
 
-        coluna_placa1 = st.selectbox("Selecione a coluna de placas do Arquivo 1", colunas1)
-        coluna_placa2 = st.selectbox("Selecione a coluna de placas do Arquivo 2", colunas2)
+        for file in uploaded_files:
+            try:
+                df = pd.read_excel(file, engine='openpyxl')
+                df["__arquivo__"] = file.name  # Marcar origem
+                dfs.append(df)
+                nomes.append(file.name)
+            except Exception as e:
+                st.error(f"❌ Erro ao processar {file.name}: {e}")
 
-        placas1 = df1[coluna_placa1].astype(str).str.strip().str.upper()
-        placas2 = df2[coluna_placa2].astype(str).str.strip().str.upper()
+        if len(dfs) >= 2:
+            st.subheader("🔍 Comparação de registros em comum")
 
-        placas_comuns = placas1[placas1.isin(placas2)].drop_duplicates()
+            # Aplicar filtro por modelos, se houver
+            if modelos_filtrar:
+                dfs_filtrados = []
+                for df in dfs:
+                    filtro_geral = pd.Series([False] * len(df))
+                    for modelo in modelos_filtrar:
+                        filtro = df.apply(lambda row: row.astype(str).str.contains(modelo, case=False).any(), axis=1)
+                        filtro_geral = filtro_geral | filtro
+                    df_filtrado = df[filtro_geral]
+                    dfs_filtrados.append(df_filtrado)
+                dfs = dfs_filtrados
 
-        st.success(f"Placas encontradas nos dois arquivos: {len(placas_comuns)}")
-        st.dataframe(placas_comuns)
+            try:
+                comum = dfs[0]
+                for df in dfs[1:]:
+                    comum = pd.merge(comum, df, how='inner')
 
-        if not placas_comuns.empty:
-            resultado = pd.DataFrame(placas_comuns, columns=["Placas em Comum"])
-            excel_data = resultado.to_excel(index=False, engine='openpyxl')
+                if not comum.empty:
+                    st.success("✅ Registros em comum encontrados!")
+                    st.dataframe(comum)
 
-            st.download_button(
-                label="📥 Baixar resultado em Excel",
-                data=excel_data,
-                file_name="placas_em_comum.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            )
-
-    except Exception as e:
-        st.error(f"Erro ao processar os arquivos: {e}")
+                    csv = comum.to_csv(index=False).encode('utf-8')
+                    st.download_button("📥 Baixar resultado em CSV", data=csv, file_name="comparacao_filtrada.csv", mime='text/csv')
+                else:
+                    st.info("⚠️ Nenhum registro em comum encontrado com os filtros aplicados.")
+            except Exception as e:
+                st.error(f"Erro na comparação: {e}")
