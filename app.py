@@ -21,30 +21,6 @@ def buscar_coincidencias_apos_placa(placa_suspeita, todas):
     contagem = placas_por_arquivo['Placa'].value_counts()
     placas_em_mais_de_um = contagem[contagem > 1].index.tolist()
 
-    for arquivo in todas['_arquivo_'].uni…
-[13:27, 20/06/2025] Jean Nk9: import pandas as pd
-import streamlit as st
-
-st.set_page_config(page_title="Comparador de Placas", layout="wide")
-st.title("🚔 Comparador de Placas com Coincidência Pós-Placa Suspeita")
-
-uploaded_files = st.file_uploader(
-    "📁 Envie 2 ou mais arquivos Excel (.xlsx)",
-    type=["xlsx"],
-    accept_multiple_files=True
-)
-
-dfs = []
-
-def buscar_coincidencias_apos_placa(placa_suspeita, todas):
-    placa_suspeita = placa_suspeita.strip().upper()
-    resultados = []
-
-    # Verifica quais placas aparecem em mais de um arquivo
-    placas_por_arquivo = todas.drop_duplicates(subset=['Placa', '_arquivo_'])
-    contagem = placas_por_arquivo['Placa'].value_counts()
-    placas_em_mais_de_um = contagem[contagem > 1].index.tolist()
-
     for arquivo in todas['_arquivo_'].unique():
         df_arq = todas[todas['_arquivo_'] == arquivo].reset_index(drop=True)
         indices_placa = df_arq.index[df_arq['Placa'] == placa_suspeita].tolist()
