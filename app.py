@@ -98,4 +98,4 @@ if uploaded_files:
 
 # Rodapé com sua assinatura
 st.markdown("<hr style='margin-top: 50px;'>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; font-size: 14px;'>Desenvolvido por <strong>Niquetti</strong> 🚔</p>", unsafe_allow_ht
+st.markdown("<p style='text-align: center; font-size: 14px;'>Desenvolvido por <strong>Niquetti</strong> 🚔</p>", unsafe_allow_html=True)
