@@ -2,7 +2,7 @@ import pandas as pd
 import streamlit as st
 
 st.set_page_config(page_title="Comparador de Placas", layout="wide")
-st.title("🚔 Comparador de Placas")
+st.title("🚔 Comparador de Placas com Coincidência Pós-Placa Suspeita")
 
 uploaded_files = st.file_uploader(
     "📁 Envie 2 ou mais arquivos Excel (.xlsx)",
@@ -12,8 +12,8 @@ uploaded_files = st.file_uploader(
 
 dfs = []
 
-# Função para buscar coincidências após a placa digitada
-def buscar_coincidencias_apos_placa(placa_suspeita, todas, placas_em_mais_de_um):
+# ✅ Função atualizada que checa se a placa aparece em mais de um arquivo diretamente
+def buscar_coincidencias_apos_placa(placa_suspeita, todas):
     placa_suspeita = placa_suspeita.strip().upper()
     resultados = []
 
@@ -22,22 +22,27 @@ def buscar_coincidencias_apos_placa(placa_suspeita, todas, placas_em_mais_de_um)
         indices_placa = df_arq.index[df_arq['Placa'] == placa_suspeita].tolist()
 
         if not indices_placa:
-            continue  # Placa não existe neste arquivo
+            continue  # Placa não está neste arquivo
 
         for idx in indices_placa:
             placas_apos = df_arq.loc[idx+1:, 'Placa'].tolist()
-            coincidencias = [p for p in placas_apos if p in placas_em_mais_de_um and p != placa_suspeita]
-            coincidencias_unicas = list(dict.fromkeys(coincidencias))
+            coincidencias = []
 
-            if coincidencias_unicas:
+            for p in placas_apos:
+                arquivos_placa = todas[todas['Placa'] == p]['_arquivo_'].nunique()
+                if arquivos_placa > 1 and p != placa_suspeita:
+                    coincidencias.append(p)
+
+            if coincidencias:
                 resultados.append({
                     'Arquivo': arquivo,
                     'Índice da placa': idx,
-                    'Placas coincidentes após': coincidencias_unicas
+                    'Placas coincidentes após': list(dict.fromkeys(coincidencias))
                 })
 
     return resultados
 
+# 🟡 Processamento de arquivos enviados
 if uploaded_files:
     if len(uploaded_files) < 2:
         st.warning("⚠️ Envie pelo menos 2 arquivos para comparar.")
@@ -64,7 +69,7 @@ if uploaded_files:
         if len(dfs) >= 2:
             todas = pd.concat(dfs, ignore_index=True)
 
-            # Lista placas que aparecem em mais de um arquivo
+            # 🟢 Lista de placas em mais de um arquivo
             placas_por_arquivo = todas.drop_duplicates(subset=['Placa', '_arquivo_'])
             contagem = placas_por_arquivo['Placa'].value_counts()
             placas_em_mais_de_um = contagem[contagem > 1].index.tolist()
@@ -75,6 +80,7 @@ if uploaded_files:
             else:
                 st.info("Nenhuma placa aparece em mais de um arquivo.")
 
+            # 🔍 Campo de busca
             st.markdown("### 🔎 Buscar coincidências após uma placa específica")
             placa_input = st.text_input("Digite a placa suspeita (ex: ABC1D23)")
 
@@ -86,7 +92,7 @@ if uploaded_files:
                     st.warning(f"A placa *{placa_normalizada}* não foi encontrada em nenhum arquivo.")
                     st.info("Confira a lista de placas que aparecem em mais de um arquivo acima.")
                 else:
-                    resultado = buscar_coincidencias_apos_placa(placa_input, todas, placas_em_mais_de_um)
+                    resultado = buscar_coincidencias_apos_placa(placa_input, todas)
                     if resultado:
                         st.success(f"✅ Coincidências encontradas após {placa_normalizada}:")
                         for r in resultado:
@@ -96,6 +102,6 @@ if uploaded_files:
                     else:
                         st.warning(f"❌ Nenhuma coincidência encontrada após a placa *{placa_normalizada}*.")
 
-# Rodapé com sua assinatura
+# Rodapé com assinatura
 st.markdown("<hr style='margin-top: 50px;'>", unsafe_allow_html=True)
 st.markdown("<p style='text-align: center; font-size: 14px;'>Desenvolvido por <strong>Niquetti</strong> 🚔</p>", unsafe_allow_html=True)
