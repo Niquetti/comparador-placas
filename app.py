@@ -24,10 +24,12 @@ if uploaded_files:
                 if 'placa' in df.columns:
                     df['Placa'] = df['placa'].astype(str).str.strip().str.upper()
                 else:
-                    # Se não tem coluna 'placa', tenta sem cabeçalho (header=None)
-                    df = pd.read_excel(file, header=None, engine='openpyxl')
-                    df.columns = ['Placa']
-                    df['Placa'] = df['Placa'].astype(str).str.strip().str.upper()
+                    # Lê com header=None e mantém todas as colunas
+                    df_sem_header = pd.read_excel(file, header=None, engine='openpyxl')
+                    primeira_coluna = df_sem_header.iloc[:, 0]
+                    df = pd.DataFrame({
+                        'Placa': primeira_coluna.astype(str).str.strip().str.upper()
+                    })
 
                 df['_arquivo_'] = file.name
                 dfs.append(df[['Placa', '_arquivo_']])
